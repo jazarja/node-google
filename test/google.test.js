@@ -66,6 +66,49 @@ describe('+ google()', function () {
     })
   })
 
+  it('should return search results when origin set', function (done) {
+    var nextCounter = 0
+    var allLinks = []
+    var query = 'Microsoft'
+
+    var finished = function () {
+      assert(allLinks.length > 0)
+      var flags = 0x0
+      for (var i = 0; i < allLinks.length; ++i) {
+        var link = allLinks[i]
+        // console.dir(link)
+        if (link.title && link.link) {
+          if (link.link.indexOf('https://www.microsoft.com/en-au') > -1) {
+            flags = 0x1
+          }
+        }
+
+        assert.equal(link.description.indexOf('Cached'), -1)
+      }
+
+      // console.log(flags)
+      assert.equal(flags, 1) // all flags above set properly
+
+      google.origin = undefined
+      done()
+    }
+
+    google.origin = 'au'
+    google(query, function (err, res) {
+      assert.ifError(err)
+      assert.equal(res.query, 'Microsoft')
+      assert.equal(typeof res.$, 'function')
+      assert.equal(typeof res.body, 'string')
+      assert.equal(typeof res.url, 'string')
+      assert.equal(res.start, nextCounter * google.resultsPerPage)
+      assert.equal(typeof res.links, 'object')
+      assert.ok(res.links.length <= google.resultsPerPage)
+      // console.log('L: ' + links.length)
+      allLinks = allLinks.concat(res.links)
+      finished()
+    })
+  })
+
   describe('when resultsPerPage is set', function () {
     it('should return search results', function (done) {
       var allLinks = []
